@@ -1,0 +1,12 @@
+{
+    "datacenter": "aws",
+    "data_dir": "/opt/consul/data",
+    "server": false,
+    "connect": {
+        "enabled": true
+    },
+    "ports": {
+        "grpc": 8502
+    }
+
+}

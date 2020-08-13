@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<html class="no-js">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Checker</title>
+</head>
+
+<body>
+
+<script>
+  $(document).foundation();
+</script>
+<div>
+<br>
+<br>
+</div>
+
+
+
+
+
+
+<div class="grid-container">
+  <div class="grid-x grid-margin-x small-up-2 medium-up-3">
+    {% for service in services %}
+    <div class="cell">
+      <div id="{{ service }}"></div>
+    </div>
+    {% endfor %}
+ 
+</div>  
+
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<script>
+{% for service in services %}
+var service1 = setInterval(servicecheck, 3000, "{{  service  }}");
+{% endfor %}
+
+//var service1 = setInterval(servicecheck, 3000, "flaskserver");
+//var service2 = setInterval(servicecheck, 3000, "nomad");
+//var service3 = setInterval(servicecheck, 3000, "APIService");
+
+function servicecheck(serviceName){
+    var text = serviceName;
+
+    $.ajax({
+      url: "/service1",
+      type: "get",
+      data: {jsdata: text},
+      success: function(response) {
+        $("#" + serviceName).html(response);
+      },
+      error: function(xhr) {
+        //Do Something to handle error
+      }
+    });
+};
+
+</script>
+
+<!-- Compressed CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css" integrity="sha256-ogmFxjqiTMnZhxCqVmcqTvjfe1Y/ec4WaRj/aQPvn+I=" crossorigin="anonymous">
+
+<!-- Compressed JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/js/foundation.min.js" integrity="sha256-pRF3zifJRA9jXGv++b06qwtSqX1byFQOLjqa2PTEb2o=" crossorigin="anonymous"></script>
+
+</body>
+
+</html>

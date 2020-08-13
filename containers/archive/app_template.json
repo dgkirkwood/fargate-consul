@@ -1,0 +1,45 @@
+{
+    "variables": {
+      "app_name" : "",
+      "app_port" : "",
+      "app_path" : ""
+    },
+    "builders": [
+      {
+        "type": "docker",
+        "image": "python:alpine3.7",
+        "commit": true,
+        "changes": [
+          "ENTRYPOINT [\"/bin/sh\", \"-c\", \"python /app/{{user `appname`}}.py\"]",
+          "WORKDIR /app",
+          "EXPOSE {{user `app_port`}}",
+          "LABEL version=0.1"
+        ]
+      }
+    ],
+    "provisioners": [
+      {
+        "type": "shell",
+        "inline": ["mkdir /app"]
+      },
+      {
+          "type": "file",
+          "source": "{{user `app_path`}}",
+          "destination": "/app"
+      },
+      {
+        "type": "shell",
+        "inline": ["pip install -r /app/requirements.txt"]
+      }
+      ],
+      "post-processors": [
+        [
+          {
+            "type": "docker-tag",
+            "repository": "dgkirkwood/{{user `app_name`}}",
+            "tag": "testing"
+          },
+          "docker-push"
+        ]
+      ]
+  }

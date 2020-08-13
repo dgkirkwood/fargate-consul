@@ -1,0 +1,9 @@
+{
+"service": {
+    "name": "payments",
+    "port": 5003,
+    "connect": { "sidecar_service": {
+    }
+}
+}
+}

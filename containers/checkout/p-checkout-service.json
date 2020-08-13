@@ -1,0 +1,9 @@
+{
+"service": {
+    "name": "checkout",
+    "port": 5001,
+    "connect": { "sidecar_service": {
+    }
+}
+}
+}

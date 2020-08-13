@@ -1,0 +1,5 @@
+{
+    "app_name": "p-payments",
+    "app_port": "5002",
+    "app_path": "../payments"
+}

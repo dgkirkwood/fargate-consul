@@ -1,0 +1,78 @@
+[
+    {
+        "name": "frontend",
+        "image": "dgkirkwood/p-frontend:testing",
+        "cpu": 20,
+        "memory": 50,
+        "essential": true,
+        "networkMode": "awsvpc",
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+              "awslogs-group": "fargate-demo",
+              "awslogs-region": "ap-southeast-2",
+              "awslogs-stream-prefix": "fargate-frontend"
+          }
+        },
+        "portMappings": [
+            {
+            "containerPort": 5000,
+            "hostPort": 5000
+            }
+        ]
+    },
+    {
+        "name": "frontend-sidecar",
+        "image": "dgkirkwood/p-frontend-consul-agent:testing",
+        "cpu": 20,
+        "memory": 200,
+        "essential": true,
+        "networkMode": "awsvpc",
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+              "awslogs-group": "fargate-demo",
+              "awslogs-region": "ap-southeast-2",
+              "awslogs-stream-prefix": "fargate-frontend-sidecar"
+          }
+        },
+        "portMappings": [
+          {
+            "containerPort": 21000,
+            "hostPort": 21000
+          },
+          {
+            "containerPort": 8500,
+            "hostPort": 8500
+          },
+          {
+            "containerPort": 8502,
+            "hostPort": 8502
+          },
+          {
+            "containerPort": 8301,
+            "hostPort": 8301,
+            "protocol": "tcp"
+          },
+          {
+            "containerPort": 8301,
+            "hostPort": 8301,
+            "protocol": "udp"
+          },
+          {
+            "containerPort": 8302,
+            "hostPort": 8302,
+            "protocol": "tcp"
+          },
+          {
+            "containerPort": 8302,
+            "hostPort": 8302,
+            "protocol": "udp"
+          }
+        ],
+        "environment": [
+            {"name" : "CONSUL_GRPC_ADDR" , "value" : "127.0.0.1:8502"},
+            {"name" : "SERVICE_CONFIG" , "value" : "opt/consul/services/p-frontend-service.json"}
+        ]
+    }
+]

@@ -92,6 +92,86 @@ resource "aws_security_group_rule" "allow_grpc_inbound" {
   security_group_id = aws_security_group.consul.id
 }
 
+resource "aws_security_group_rule" "allow_serf_WAN_inbound" {
+  type        = "ingress"
+  from_port   = 8302
+  to_port     = 8302
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
 
+  security_group_id = aws_security_group.consul.id
+}
 
+resource "aws_security_group_rule" "allow_serf_WAN_UDP_inbound" {
+  type        = "ingress"
+  from_port   = 8302
+  to_port     = 8302
+  protocol    = "udp"
+  cidr_blocks = ["0.0.0.0/0"]
 
+  security_group_id = aws_security_group.consul.id
+}
+
+resource "aws_security_group_rule" "envoy_ports" {
+  from_port         = 21000
+  protocol          = "tcp"
+  security_group_id = aws_security_group.consul.id
+  to_port           = 21255
+  cidr_blocks = [
+    "0.0.0.0/0"
+  ]
+  type = "ingress"
+}
+
+resource "aws_security_group_rule" "allow_ssh" {
+  type      = "ingress"
+  from_port = 22
+  to_port   = 22
+  protocol  = "tcp"
+  cidr_blocks = [
+    "0.0.0.0/0"
+  ]
+  security_group_id = aws_security_group.consul.id
+}
+resource "aws_security_group_rule" "allow_http_in" {
+  from_port         = 80
+  protocol          = "tcp"
+  security_group_id = aws_security_group.consul.id
+  to_port           = 80
+  cidr_blocks = [
+    "0.0.0.0/0"
+  ]
+  type = "ingress"
+}
+
+resource "aws_security_group_rule" "allow_https_in" {
+  protocol  = "tcp"
+  from_port = 443
+  to_port   = 443
+  cidr_blocks = [
+    "0.0.0.0/0"
+  ]
+  security_group_id = aws_security_group.consul.id
+  type              = "ingress"
+}
+
+resource "aws_security_group_rule" "allow_ingress" {
+  from_port         = 8080
+  protocol          = "tcp"
+  security_group_id = aws_security_group.consul.id
+  to_port           = 8080
+  cidr_blocks = [
+    "0.0.0.0/0"
+  ]
+  type = "ingress"
+}
+
+resource "aws_security_group_rule" "allow_egress_all" {
+  security_group_id = aws_security_group.consul.id
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks = [
+  "0.0.0.0/0"]
+}

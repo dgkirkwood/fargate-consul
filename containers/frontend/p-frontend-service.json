@@ -1,0 +1,23 @@
+{
+"service": {
+    "name": "frontend",
+    "port": 5000,
+    "connect": { "sidecar_service": {
+      "proxy": {
+        "upstreams": [
+          {
+            "destination_name": "checkout",
+            "local_bind_port": 5001,
+	          "local_bind_address": "127.0.0.1"
+          },
+          {
+            "destination_name": "payments",
+            "local_bind_port": 5003,
+	          "local_bind_address": "127.0.0.1"
+          }
+        ]
+    }
+    }
+}
+}
+}

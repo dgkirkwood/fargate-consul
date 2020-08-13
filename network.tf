@@ -24,29 +24,17 @@ module "vpc" {
 resource "aws_network_interface" "consul-server" {
   subnet_id   = module.vpc.public_subnets[0]
   private_ips = ["10.0.101.100"]
-  security_groups = [aws_security_group.consul.id, aws_security_group.sg_for_ec2_instances.id]
+  security_groups = [aws_security_group.consul.id]
 
   tags = {
     Name = "primary_network_interface"
   }
 }
 
-#Create interface for first ECS server. Placed in public subnet to allow easy access for lab testing
-resource "aws_network_interface" "ecs-server" {
+resource "aws_network_interface" "test-server" {
   subnet_id   = module.vpc.public_subnets[0]
-  private_ips = ["10.0.101.150"]
-  security_groups = [aws_security_group.sg_for_ec2_instances.id]
-
-  tags = {
-    Name = "primary_network_interface"
-  }
-}
-
-#Create interface for second ECS server. Placed in public subnet to allow easy access for lab testing
-resource "aws_network_interface" "ecs-server2" {
-  subnet_id   = module.vpc.public_subnets[0]
-  private_ips = ["10.0.101.155"]
-  security_groups = [aws_security_group.sg_for_ec2_instances.id]
+  private_ips = ["10.0.101.110"]
+  security_groups = [aws_security_group.consul.id]
 
   tags = {
     Name = "primary_network_interface"

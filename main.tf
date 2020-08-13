@@ -62,143 +62,44 @@ EOF
     key_name = var.aws_ec2_key
 
     tags = {
-        Name = "${var.cluster_name}-consul-server"
+        Name = "fargateConsulServer"
     }
 }
 
 
-#Find AMI optimised for ECS
-data "aws_ami" "ecs" {
-  most_recent = true
-
-  filter {
-    name = "name"
-    values = [
-    "amzn2-ami-ecs-*"]
-  }
-
-  filter {
-    name = "virtualization-type"
-    values = [
-    "hvm"]
-  }
-
-  owners = [
-    "amazon"
-  ]
-}
-
-
-
-#Two ECS servers are created to allow enough ENI interfaces for testing our application
-#Default instance size is t2.small - more ENIs than the t2.micro
-resource "aws_instance" "ecs-server" {
-    ami           = data.aws_ami.ecs.id
-    instance_type = var.ecs_instance_size
+resource "aws_instance" "test-server" {
+    ami           = data.aws_ami.ubuntu.id
+    instance_type = var.consul_instance_size
 
     network_interface {
-        network_interface_id = aws_network_interface.ecs-server.id
+        network_interface_id = aws_network_interface.test-server.id
         device_index         = 0
     }
-
-    key_name = var.aws_ec2_key
-    iam_instance_profile = aws_iam_instance_profile.ec2_iam_instance_profile.name
-
-    #User data string required to populate ENV vars which will auto register this instance with our ECS cluster
+    #User data field to grab Consul binary, create necessary directories and start agent with config
+    #Relies on the file provisioner in the same resource
     user_data = <<EOF
 #!/bin/bash
-echo ECS_CLUSTER=${var.cluster_name} >> /etc/ecs/ecs.config
-echo ECS_INSTANCE_ATTRIBUTES={\"purchase-option\":\"ondemand\"} >> /etc/ecs/ecs.config
-
-
+sudo apt-get update
+sudo apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io
 EOF
-
-    #Provisioner to copy across config files which will be presented as volumes for containers managed by ECS
-    provisioner "file" {
-      source      = "configs/"
-      destination = "/home/ec2-user"
-      connection {
-        type     = "ssh"
-        user     = "ec2-user"
-        private_key = file(var.private_key_path)
-        host = aws_instance.ecs-server.public_ip
-      }
-
-    }
-
-    #Provisioner to execute script placing files in the correct directories to be consumed by containers
-    provisioner "remote-exec" {
-      inline = [
-        "chmod +x /home/ec2-user/movefiles.sh",
-        "/home/ec2-user/movefiles.sh"
-      ]
-      connection {
-        type     = "ssh"
-        user     = "ec2-user"
-        private_key = file(var.private_key_path)
-        host = aws_instance.ecs-server.public_ip
-  }
-    }
-
-    tags = {
-        Name = "${var.cluster_name}-ecs-server"
-    }
-    #This will wait for the templated config files to be created before executing to ensure they are available for upload
-    depends_on = [local_file.consul-agent-config]
-}
-
-#Second ECS server for ENI availability
-resource "aws_instance" "ecs-server2" {
-    ami           = data.aws_ami.ecs.id
-    instance_type = var.ecs_instance_size
-
-    network_interface {
-        network_interface_id = aws_network_interface.ecs-server2.id
-        device_index         = 0
-    }
-
+    #Must correspond to an existing EC2 key name 
     key_name = var.aws_ec2_key
-    iam_instance_profile = aws_iam_instance_profile.ec2_iam_instance_profile.name
-    user_data = <<EOF
-#!/bin/bash
-echo ECS_CLUSTER=${var.cluster_name} >> /etc/ecs/ecs.config
-echo ECS_INSTANCE_ATTRIBUTES={\"purchase-option\":\"ondemand\"} >> /etc/ecs/ecs.config
-
-
-EOF
-
-    provisioner "file" {
-      source      = "configs/"
-      destination = "/home/ec2-user"
-      connection {
-        type     = "ssh"
-        user     = "ec2-user"
-        private_key = file(var.private_key_path)
-        host = aws_instance.ecs-server2.public_ip
-  }
-
-    }
-
-    provisioner "remote-exec" {
-      inline = [
-        "chmod +x /home/ec2-user/movefiles.sh",
-        "/home/ec2-user/movefiles.sh"
-      ]
-      connection {
-        type     = "ssh"
-        user     = "ec2-user"
-        private_key = file(var.private_key_path)
-        host = aws_instance.ecs-server2.public_ip
-  }
-    }
 
     tags = {
-        Name = "${var.cluster_name}-ecs-server"
+        Name = "dk-test-server"
     }
-    depends_on = [local_file.consul-agent-config]
 }
-
-
-
 
 

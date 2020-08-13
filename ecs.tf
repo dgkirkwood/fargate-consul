@@ -2,67 +2,121 @@ resource "aws_ecs_cluster" "ecs_cluster" {
   name = var.cluster_name
 }
 
-resource "aws_ecs_task_definition" "server" {
-  family = "serviceMeshAppServer"
-  container_definitions = file("task-definitions/server.json")
-
+resource "aws_ecs_task_definition" "frontend" {
+  family = "frontend"
+  container_definitions = file("task-definitions/frontend.json")
+  cpu = 1024
+  memory = 2048
   network_mode = "awsvpc"
-
-  volume {
-    name = "envoy-s"
-    host_path = "/ecs/envoy-s"
-  }
-  volume {
-    name = "consul"
-    host_path = "/ecs/consul-agent"
-  }
+  requires_compatibilities = ["FARGATE"]
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role_cloudjoin.arn
 }
 
-resource "aws_ecs_service" "http-server" {
-  name = "${var.cluster_name}-http-server"
-  cluster = aws_ecs_cluster.ecs_cluster.id
-  desired_count = 3
-  task_definition = "${aws_ecs_task_definition.server.family}:${max("${aws_ecs_task_definition.server.revision}", "${data.aws_ecs_task_definition.server.revision}")}"
-  network_configuration {
-    security_groups = [aws_security_group.sg_for_ec2_instances.id]
-    subnets         = [module.vpc.public_subnets[0]]
-}
-}
-
-data "aws_ecs_task_definition" "server" {
-  task_definition = aws_ecs_task_definition.server.family
-  depends_on = [aws_ecs_task_definition.server]
-}
-
-
-resource "aws_ecs_task_definition" "client" {
-  family = "serviceMeshAppClient"
-  container_definitions = file("task-definitions/client.json")
-
-  network_mode = "awsvpc"
-
-  volume {
-    name = "envoy-c"
-    host_path = "/ecs/envoy-c"
-  }
-  volume {
-    name = "consul"
-    host_path = "/ecs/consul-agent"
-  }
-}
-
-resource "aws_ecs_service" "http-client" {
-  name = "${var.cluster_name}-http-client"
-  cluster = aws_ecs_cluster.ecs_cluster.id
+resource "aws_ecs_service" "frontend" {
+  launch_type = "FARGATE"
+  cluster = aws_ecs_cluster.ecs_cluster.arn
+  name = "frontend-svc"
   desired_count = 1
-  task_definition = "${aws_ecs_task_definition.client.family}:${max("${aws_ecs_task_definition.client.revision}", "${data.aws_ecs_task_definition.client.revision}")}"
+  task_definition = "${aws_ecs_task_definition.frontend.family}:${max("${aws_ecs_task_definition.frontend.revision}", "${data.aws_ecs_task_definition.frontend.revision}")}"
   network_configuration {
-    security_groups = [aws_security_group.sg_for_ec2_instances.id]
+    security_groups = [aws_security_group.consul.id, aws_security_group.frontend_allow_group.id]
     subnets         = [module.vpc.public_subnets[0]]
+    assign_public_ip = true
+}
+  
+}
+
+data "aws_ecs_task_definition" "frontend" {
+  task_definition = aws_ecs_task_definition.frontend.family
+  depends_on = [aws_ecs_task_definition.frontend]
+}
+
+
+resource "aws_ecs_task_definition" "checkout" {
+  family = "checkout"
+  container_definitions = file("task-definitions/checkout.json")
+  cpu = 1024
+  memory = 2048
+  network_mode = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role_cloudjoin.arn
+}
+
+resource "aws_ecs_service" "checkout" {
+  launch_type = "FARGATE"
+  cluster = aws_ecs_cluster.ecs_cluster.arn
+  name = "checkout-svc"
+  desired_count = 3
+  task_definition = "${aws_ecs_task_definition.checkout.family}:${max("${aws_ecs_task_definition.checkout.revision}", "${data.aws_ecs_task_definition.checkout.revision}")}"
+  network_configuration {
+    security_groups = [aws_security_group.consul.id]
+    subnets         = [module.vpc.public_subnets[0]]
+    assign_public_ip = true
 }
 }
 
-data "aws_ecs_task_definition" "client" {
-  task_definition = aws_ecs_task_definition.client.family
-  depends_on = [aws_ecs_task_definition.client]
+data "aws_ecs_task_definition" "checkout" {
+  task_definition = aws_ecs_task_definition.checkout.family
+  depends_on = [aws_ecs_task_definition.checkout]
+}
+
+resource "aws_ecs_task_definition" "payments" {
+  family = "payments"
+  container_definitions = file("task-definitions/payments.json")
+  cpu = 1024
+  memory = 2048
+  network_mode = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role_cloudjoin.arn
+}
+
+resource "aws_ecs_service" "payments" {
+  launch_type = "FARGATE"
+  cluster = aws_ecs_cluster.ecs_cluster.arn
+  name = "payments-svc"
+  desired_count = 3
+  task_definition = "${aws_ecs_task_definition.payments.family}:${max("${aws_ecs_task_definition.payments.revision}", "${data.aws_ecs_task_definition.payments.revision}")}"
+  network_configuration {
+    security_groups = [aws_security_group.consul.id]
+    subnets         = [module.vpc.public_subnets[0]]
+    assign_public_ip = true
+}
+}
+
+data "aws_ecs_task_definition" "payments" {
+  task_definition = aws_ecs_task_definition.payments.family
+  depends_on = [aws_ecs_task_definition.payments]
+}
+
+
+resource "aws_ecs_task_definition" "ingress" {
+  family = "ingress"
+  container_definitions = file("task-definitions/ingress.json")
+  cpu = 1024
+  memory = 2048
+  network_mode = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn = aws_iam_role.ecs_task_role_cloudjoin.arn
+}
+
+resource "aws_ecs_service" "ingress" {
+  launch_type = "FARGATE"
+  cluster = aws_ecs_cluster.ecs_cluster.arn
+  name = "ingress-svc"
+  desired_count = 2
+  task_definition = "${aws_ecs_task_definition.ingress.family}:${max("${aws_ecs_task_definition.ingress.revision}", "${data.aws_ecs_task_definition.ingress.revision}")}"
+  network_configuration {
+    security_groups = [aws_security_group.consul.id]
+    subnets         = [module.vpc.public_subnets[0]]
+    assign_public_ip = true
+}
+}
+
+data "aws_ecs_task_definition" "ingress" {
+  task_definition = aws_ecs_task_definition.ingress.family
+  depends_on = [aws_ecs_task_definition.ingress]
 }

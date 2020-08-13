@@ -1,0 +1,61 @@
+{
+    "variables": {
+      "app_name" : "",
+      "app_path" : ""
+
+    },
+    "builders": [
+      {
+        "type": "docker",
+        "image": "envoyproxy/envoy-alpine:v1.13.2",
+        "commit": true,
+        "changes": [
+          "ENTRYPOINT [\"/bin/sh\", \"-c\", \"/entrypoint.sh\"]",
+          "LABEL version=0.1",
+          "ENV SERVICE_CONFIG /opt/consul/services"
+        ]
+      }
+    ],
+    "provisioners": [
+      {
+        "type": "shell",
+        "inline": [
+          "mkdir /opt/consul",
+          "mkdir /opt/consul/config && mkdir /opt/consul/data && mkdir /opt/consul/services",
+          "apk add -u bash curl",
+          "wget https://releases.hashicorp.com/consul/1.8.0/consul_1.8.0_linux_amd64.zip -O /tmp/consul.zip",
+          "unzip /tmp/consul.zip -d /tmp",
+          "mv /tmp/consul /usr/local/bin/consul"
+        ]
+      },
+      {
+          "type": "file",
+          "source": "entrypoint.sh",
+          "destination": "/entrypoint.sh"
+      },
+      {
+        "type": "file",
+        "source": "consulagent_config.json",
+        "destination": "/opt/consul/config/consulagent_config.json"
+      },
+      {
+        "type": "file",
+        "source": "{{user `app_path`}}/{{user `app_name`}}-service.json",
+        "destination": "/opt/consul/services/{{user `app_name`}}-service.json"
+      },
+      {
+        "type": "shell",
+        "inline": ["chmod +x /entrypoint.sh"]
+      }
+      ],
+      "post-processors": [
+        [
+          {
+            "type": "docker-tag",
+            "repository": "dgkirkwood/{{user `app_name`}}-consul-agent",
+            "tag": "testing"
+          },
+          "docker-push"
+        ]
+      ]
+  }

@@ -1,0 +1,61 @@
+[
+    {
+        "name": "ingress",
+        "image": "dgkirkwood/p-ingress-consul-agent:testing",
+        "cpu": 20,
+        "memory": 200,
+        "essential": true,
+        "networkMode": "awsvpc",
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+              "awslogs-group": "fargate-demo",
+              "awslogs-region": "ap-southeast-2",
+              "awslogs-stream-prefix": "fargate-ingress-sidecar"
+          }
+        },
+        "portMappings": [
+          {
+            "containerPort": 21000,
+            "hostPort": 21000
+          },
+          {
+            "containerPort": 8500,
+            "hostPort": 8500
+          },
+          {
+            "containerPort": 8502,
+            "hostPort": 8502
+          },
+          {
+            "containerPort": 8301,
+            "hostPort": 8301,
+            "protocol": "tcp"
+          },
+          {
+            "containerPort": 8301,
+            "hostPort": 8301,
+            "protocol": "udp"
+          },
+          {
+            "containerPort": 8302,
+            "hostPort": 8302,
+            "protocol": "tcp"
+          },
+          {
+            "containerPort": 8302,
+            "hostPort": 8302,
+            "protocol": "udp"
+          },
+          {
+            "containerPort": 8080,
+            "hostPort": 8080
+          }
+        ],
+        "environment": [
+            {"name" : "CONSUL_GRPC_ADDR" , "value" : "127.0.0.1:8502"},
+            {"name" : "SERVICE_CONFIG" , "value" : "opt/consul/services/p-ingress-service.json"}
+        ]
+
+    }
+]

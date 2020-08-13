@@ -1,0 +1,15 @@
+{
+    "Kind": "ingress-gateway",
+    "Name": "us-east-ingress",
+    "Listeners": [
+      {
+        "Port": 3456,
+        "Protocol": "tcp",
+        "Services": [
+          {
+            "Name": "db"
+          }
+        ]
+      }
+    ]
+  }

@@ -17,11 +17,6 @@ variable "consul_instance_size" {
     default = "t2.micro"
 }
 
-variable "ecs_instance_size" {
-    type = string
-    default = "t2.small"
-}
-
 variable "aws_ec2_key" {
     type = string
     description = "EC2 key name that matches an available key already in AWS. You must have the corresponding private key to access machines"
