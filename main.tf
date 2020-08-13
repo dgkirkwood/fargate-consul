@@ -53,7 +53,7 @@ EOF
       connection {
         type     = "ssh"
         user     = "ubuntu"
-        private_key = file(var.private_key_path)
+        private_key = var.private_key_path
         host = aws_instance.consul-server.public_ip
   }
     }
